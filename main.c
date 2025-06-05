@@ -1,6 +1,8 @@
 #include <SDL2/SDL.h>
-// #include <SDL2/SDL_image.h>
 #include <stdbool.h>
+#include <stdlib.h>
+#include <time.h>
+#include <stdio.h>
 
 int main(int argc, char **argv)
 {
@@ -13,9 +15,8 @@ int main(int argc, char **argv)
         SDL_WINDOW_SHOWN);
 
     SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, 0);
-    //  SDL_Texture *img = IMG_LoadTexture(renderer, "pikachu.png");
 
-    SDL_Rect quad1, mesa, linhaCentral, raquete1, raquete2;
+    SDL_Rect quad1, mesa, linhaCentral, raquete1, raquete2, bola;
     quad1.x = 50;
     quad1.y = 20;
     quad1.w = 400;
@@ -40,8 +41,27 @@ int main(int argc, char **argv)
     raquete2.x = mesa.x + mesa.w;
     raquete2.y = (720 - raquete2.h) / 2;
 
+    bola.w = 20;
+    bola.h = 20;
+    bola.x = (1280 - bola.w) / 2;
+    bola.y = (720 - bola.h) / 2;
+    int velocidade_bola_x = -5;
+    int velocidade_bola_y = 5;
+    int count = 0;
+    int velocidade_raquete2 = 5;
     while (true)
     {
+        if (count == 300)
+        {
+            srand(time(NULL));
+            count = 0;
+            velocidade_raquete2 = rand() % (5 - 2 + 1) + 2;
+            printf("Velocidade da raquete 2: %d\n", velocidade_raquete2);
+        }
+        else
+        {
+            count++;
+        }
         SDL_Event event;
         while (SDL_PollEvent(&event))
         {
@@ -53,11 +73,11 @@ int main(int argc, char **argv)
             {
                 if (event.key.keysym.sym == SDLK_UP && raquete1.y > mesa.y)
                 {
-                    raquete1.y -= 10;
+                    raquete1.y -= 20;
                 }
                 else if (event.key.keysym.sym == SDLK_DOWN && raquete1.y < mesa.y + mesa.h - raquete1.h)
                 {
-                    raquete1.y += 10;
+                    raquete1.y += 20;
                 }
             }
         }
@@ -72,11 +92,32 @@ int main(int argc, char **argv)
         SDL_RenderFillRect(renderer, &raquete1);
         SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
         SDL_RenderFillRect(renderer, &raquete2);
-        // SDL_RenderCopy(renderer, img, NULL, &quad1);
+        SDL_SetRenderDrawColor(renderer, 255, 165, 0, 255);
+        SDL_RenderFillRect(renderer, &bola);
         SDL_RenderPresent(renderer);
+        int centro_bola = bola.y + bola.h / 2;
+        int centro_raquete2 = raquete2.y + raquete2.h / 2;
+        if (centro_bola < centro_raquete2 && raquete2.y > mesa.y)
+        {
+            raquete2.y -= velocidade_raquete2;
+        }
+        else if (centro_bola > centro_raquete2 && raquete2.y + raquete2.h < mesa.y + mesa.h)
+        {
+            raquete2.y += velocidade_raquete2;
+        }
+        if (bola.x + bola.w >= mesa.x + mesa.w || bola.x <= mesa.x)
+        {
+            velocidade_bola_x *= -1;
+        }
+        if (bola.y >= mesa.y + mesa.h - bola.h || bola.y <= mesa.y)
+        {
+            velocidade_bola_y *= -1;
+        }
+        bola.y += velocidade_bola_y;
+        bola.x += velocidade_bola_x;
+        SDL_Delay(1000 / 60);
     }
 
-    //  SDL_DestroyTexture(img);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
